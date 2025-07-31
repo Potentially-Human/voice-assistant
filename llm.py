@@ -15,6 +15,7 @@ class LLMManager:
     def __init__(self, model_name = "gpt-4.1-mini", image_path = "screenshot.png", system_prompt = None, max_tokens = 1024, temperature = 0.4, name = "Bot"):
         self.model_name = model_name
         self.image_path = image_path
+        self.memory = []
         
         if not system_prompt:
             self.system_prompt = """
@@ -114,33 +115,63 @@ class LLMManager:
 
 
     def get_detailed_prompt(self, prompt: str, with_screenshot = True, screenshot_detail: str = "low"):
-        if with_screenshot:
-            if screenshot_detail not in ["low", "high", "auto"]:
-                raise ValueError("screenshot detail must be low, high or auto.")
+        # if regular_type:
+        #     if with_screenshot:
+        #         if screenshot_detail not in ["low", "high", "auto"]:
+        #             raise ValueError("screenshot detail must be low, high or auto.")
+        #         messages = [
+        #             Message(
+        #                 content = [
+        #                     ResponseInputTextParam(text = prompt, type = "input_text"),
+        #                     ResponseInputImageParam(detail = screenshot_detail, image_url = self.screenshot(), type = "input_image")
+        #                 ], 
+        #                 role = "user"
+        #             )
+        #         ]
+        #     else: 
+        #         messages = [
+        #             Message(
+        #                 content = [
+        #                     ResponseInputTextParam(text = prompt, type = "input_text")
+        #                 ], 
+        #                 role = "user"
+        #             )
+        #         ]
+        # else:
+        if with_screenshot: 
             messages = [
-                Message(
-                    content = [
-                        ResponseInputTextParam(text = prompt, type = "input_text"),
-                        ResponseInputImageParam(detail = screenshot_detail, image_url = self.screenshot(), type = "input_image")
-                    ], 
-                    role = "user"
-                )
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": prompt},
+                        {
+                            "type": "input_image",
+                            "image_url": self.screenshot(),
+                        },
+                    ]
+                }
             ]
-        else: 
+        else:
             messages = [
-                Message(
-                    content = [
-                        ResponseInputTextParam(text = prompt, type = "input_text")
-                    ], 
-                    role = "user"
-                )
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": prompt},
+                    ]
+                }
             ]
 
-        return messages
+        return self.memory + messages
 
     # processing function an async function
-    async def send_to_model(self, detailed_prompt, processing_function, complete_function):
-        result = Runner.run_streamed(self.agent, input = detailed_prompt, session = None)
+    async def send_to_model(self, prompt, processing_function, complete_function):
+        self.memory.append({
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": prompt}
+            ]
+        })
+        result = Runner.run_streamed(self.agent, input = self.get_detailed_prompt(prompt), session = None)
         async for event in result.stream_events():
             if event.type == "raw_response_event":
                 if isinstance(event.data, ResponseTextDeltaEvent):
@@ -156,6 +187,11 @@ class LLMManager:
                 elif event.item.type == "tool_call_output_item":
                     print(f"-- Tool output: {event.item.output}", flush = True)
                 elif event.item.type == "message_output_item":
+                    self.memory.append({
+                        "role": "assistant",
+                        "content": event.item.raw_item.content[0].text
+                    })
+                    # print(self.memory)
                     print("\n LLM Finished Generating \n", flush = True)
                     await complete_function()
                 else:

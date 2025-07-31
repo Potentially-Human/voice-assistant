@@ -107,8 +107,8 @@ class ElevenLabsManager:
         self.current_words.append(text.strip())
         while sum([len(i) for i in self.current_words]) > self.max_character_in_subtitles and len(self.current_words) > 2:
             self.current_words = self.current_words[1:]
-        self.subtitle_window.update_text(" ".join(self.current_words))
-        print(text, end="", flush = True)
+        self.subtitle_window.update_segments([(" ".join(self.current_words), "rgb(255, 100, 100)", "white")])
+        # print(text, end="", flush = True)
         # Potentially change this to have the array have a number with it
 
         # if self.current_words[0] == text.strip():
@@ -144,7 +144,7 @@ class ElevenLabsManager:
         if (self.audio_queued + len(self.audio_buffer_list) + 1 >= self.min_audio_before_playback) or data.get("isFinal"):
             audio_released_from_buffer = False
             for bytes in self.audio_buffer_list:
-                print("Chunk released from buffer", flush = True)
+                # print("Chunk released from buffer", flush = True)
                 self.audio_queued += 1
                 audio_released_from_buffer = True
                 if self.audio_queue.empty():
@@ -155,13 +155,13 @@ class ElevenLabsManager:
                 await self.process_alignment(self.alignment)
             if self.audio_queue.empty():
                 self.time = time.time()
-            print("Directly queued chunk", flush = True)
+            # print("Directly queued chunk", flush = True)
             self.audio_queued += 1
             if data.get("audio"):
                 self.audio_queue.put(self.decode_mp3_bytes(base64.b64decode(data.get("audio"))))
                 await self.process_alignment(new_alignment_list, force = force)
         else:
-            print("Chunk Buffered", flush = True)
+            # print("Chunk Buffered", flush = True)
             if data.get("audio"):
                 self.audio_buffer_list.append(self.decode_mp3_bytes(base64.b64decode(data.get("audio"))))
     

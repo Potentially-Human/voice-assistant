@@ -2,11 +2,11 @@ from RealtimeSTT import AudioToTextRecorder
 
 class STTManager:
     def __init__(self, config = {
-        'spinner': False,
-        'model': 'base.en', # or large-v2 or deepdml/faster-whisper-large-v3-turbo-ct2 or ...
+        'spinner': True,
+        'model': 'small.en', # or large-v2 or deepdml/faster-whisper-large-v3-turbo-ct2 or ...
         'download_root': None, # default download root location. Ex. ~/.cache/huggingface/hub/ in Linux
         # 'input_device_index': 1,
-        'realtime_model_type': 'base.en', # or small.en or distil-small.en or ...
+        'realtime_model_type': 'small.en', # or small.en or distil-small.en or ...
         'language': 'en',
         'silero_sensitivity': 0.05,
         'webrtc_sensitivity': 3,
@@ -17,6 +17,7 @@ class STTManager:
         'realtime_processing_pause': 0.02,
         'on_realtime_transcription_update': None,
         'use_main_model_for_realtime': True,
+        'handle_buffer_overflow': False,
         #'on_realtime_transcription_stabilized': text_detected,
         'silero_deactivity_detection': True,
         'early_transcription_on_silence': 0,
