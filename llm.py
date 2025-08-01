@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class LLMManager:
-    def __init__(self, model_name = "gpt-4.1-mini", image_path = "screenshot.png", system_prompt = None, max_tokens = 1024, temperature = 0.4, name = "Bot"):
+    def __init__(self, model_name = "gpt-4.1-mini-2025-04-14", image_path = "screenshot.png", system_prompt = None, max_tokens = 1024, temperature = 0.4, name = "Bot"):
         self.model_name = model_name
         self.image_path = image_path
         self.memory = []

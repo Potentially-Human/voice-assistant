@@ -207,7 +207,6 @@ def create_window():
     asyncio.set_event_loop(loop)
 
     subtitle_window = SubtitleWindow("", subtitle_font, 24)
-    subtitle_window.move(200, 200)
 
     loop.create_task(chatbot())
     with loop:

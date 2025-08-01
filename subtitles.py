@@ -103,6 +103,7 @@ class SubtitleWindow(QWidget):
         #self.adjustSize()
         self.show()
         screen_width = QGuiApplication.primaryScreen().geometry().width() - 20
+        screen_height = QGuiApplication.primaryScreen().geometry().height()
         self.resize(screen_width, self.label.sizeHint().height() + 20)
 
         # Change mouse cursor to "move" when hovering over the window
@@ -111,6 +112,8 @@ class SubtitleWindow(QWidget):
         # Variables to track dragging
         self._drag_active = False
         self._drag_position = QPoint()
+
+        self.move(20, screen_height - 100)
 
     def update_segments(self, segments):
         self.label.setSegments(segments)
@@ -142,7 +145,6 @@ if __name__ == "__main__":
     ]
     overlay = SubtitleWindow(segments, font_file)
     # overlay.update_segments([("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm", "red", "white")])
-    overlay.move(200, 200)
     # Example of updating segments after creation:
     # overlay.update_segments([("New ", "green", "white"), ("text", "black", "yellow")])
     sys.exit(app.exec())
