@@ -10,7 +10,7 @@ import base64
 import time
 
 class ElevenLabsManager:
-    def __init__(self, api_key, model_id, voice_id, websocket_uri, subtitle_window, sample_rate = 44100, channels = 2, min_audio_before_playback = 1, max_character_in_subtitles = 60, subtitle_font = "font.otf"):
+    def __init__(self, api_key, model_id, voice_id, websocket_uri, subtitle_window, sample_rate = 44100, channels = 2, min_audio_before_playback = 1, max_character_in_subtitles = 60, subtitle_font = "font.otf", output_colors = ("rgb(100, 255, 100)", "white")):
         self.model_id = model_id
         self.voice_id = voice_id
         self.websocket_uri = websocket_uri
@@ -32,6 +32,7 @@ class ElevenLabsManager:
         # self.subtitle_app_thread.start()
         self.subtitle_window = subtitle_window
         self.is_generating = False
+        self.output_colors = output_colors
         
     
     async def __aenter__(self):
@@ -56,6 +57,8 @@ class ElevenLabsManager:
         await self.websocket.send(json.dumps(message))
 
     async def add_text(self, text, context_id):
+        if not text:
+            return
         await self.websocket.send(json.dumps({
             "text": text,
             "context_id": context_id
@@ -107,7 +110,7 @@ class ElevenLabsManager:
         self.current_words.append(text.strip())
         while sum([len(i) for i in self.current_words]) > self.max_character_in_subtitles and len(self.current_words) > 2:
             self.current_words = self.current_words[1:]
-        self.subtitle_window.update_segments([(" ".join(self.current_words), "rgb(255, 100, 100)", "white")])
+        self.subtitle_window.update_segments([(" ".join(self.current_words), self.output_colors[0], self.output_colors[1])])
         # print(text, end="", flush = True)
         # Potentially change this to have the array have a number with it
 
@@ -123,6 +126,7 @@ class ElevenLabsManager:
                 print("\n\n\n", flush = True)
                 if data.get("isFinal"):
                     print(data, flush = True)
+                    self.current_words.clear()
                     print("\nContext complete", flush = True)
                     self.is_generating = False
                     await self.queue_audio(data)

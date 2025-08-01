@@ -15,7 +15,7 @@ class StrokeLabel(QLabel):
         return QSize(width + pad * 2, height + pad * 2)
     def __init__(self, parent=None):
         super().__init__("", parent)
-        self.stroke_width = 2
+        self.stroke_width = 5
         # Each segment: (text, stroke_color, fill_color)
         self.segments = [("", QColor("black"), QColor("white"))]
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)

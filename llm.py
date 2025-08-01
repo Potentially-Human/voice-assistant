@@ -97,6 +97,24 @@ class LLMManager:
 
         self.session = SQLiteSession("main_conversation", "history.db")
         self.name = name
+        self.bracket_layer = 0
+        self.add_space_before = False
+
+    def clean_text(self, text):
+        cleaned_text = ""
+        if self.add_space_before:
+            cleaned_text = " "
+            self.add_space_before = False
+        for char in text:
+            if char in ["(", "[", "}"]:
+                self.bracket_layer += 1
+
+            if self.bracket_layer == 0:
+                cleaned_text += char
+
+            if char in [")", "]", "}"]:
+                self.bracket_layer -= 1
+        return cleaned_text
 
     def screenshot(self) -> str:
         with mss.mss() as mss_obj:
@@ -165,17 +183,22 @@ class LLMManager:
 
     # processing function an async function
     async def send_to_model(self, prompt, processing_function, complete_function):
+        result = Runner.run_streamed(self.agent, input = self.get_detailed_prompt(prompt), session = None)
         self.memory.append({
             "role": "user",
             "content": [
                 {"type": "input_text", "text": prompt}
             ]
         })
-        result = Runner.run_streamed(self.agent, input = self.get_detailed_prompt(prompt), session = None)
         async for event in result.stream_events():
             if event.type == "raw_response_event":
                 if isinstance(event.data, ResponseTextDeltaEvent):
-                    await processing_function(event.data.delta)
+                    # This is for the case where a chunk is just a space, and so the tts_manager will not actually transcribe it, thus in the subtitle a space will be missing. 
+                    if event.data.delta == " ":
+                        self.add_space_before = True
+                    elif event.data.delta:
+                        cleaned_text = self.clean_text(event.data.delta)
+                        await processing_function(cleaned_text)
             # When the agent updates, print that
             elif event.type == "agent_updated_stream_event":
                 print(f"Agent updated: {event.new_agent.name}", flush = True)
@@ -191,6 +214,7 @@ class LLMManager:
                         "role": "assistant",
                         "content": event.item.raw_item.content[0].text
                     })
+                    self.bracket_layer = 0
                     # print(self.memory)
                     print("\n LLM Finished Generating \n", flush = True)
                     await complete_function()

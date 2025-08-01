@@ -129,6 +129,7 @@ async def chatbot():
             if not text:
                 return
             print("User: " + text, flush = True)
+            subtitle_window.update_segments([(text, "rgb(100, 100, 255)", "white")])
             await llm_manager.send_to_model(text, process_llm_text, flush)
 
         
